@@ -24,8 +24,6 @@ namespace Player.ActionHandlers
         private bool _isDrag;
         private float _clickHoldDuration;
 
-        private UnityEngine.Camera _mainCamera => CameraHolder.Instance.MainCamera;
-
 
         private void Update()
         {
@@ -69,7 +67,7 @@ namespace Player.ActionHandlers
                 _isClick = true;
                 _clickHoldDuration = .0f;
 
-                _pointerDownPosition = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
+                _pointerDownPosition = CameraHolder.Instance.MainCamera.ScreenToWorldPoint(Input.mousePosition);
 
                 PointerDownEvent?.Invoke(_pointerDownPosition);
 
@@ -77,7 +75,7 @@ namespace Player.ActionHandlers
             }
             else if (Input.GetMouseButtonUp(0))
             {
-                var pointerUpPosition = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
+                var pointerUpPosition = CameraHolder.Instance.MainCamera.ScreenToWorldPoint(Input.mousePosition);
 
                 if (_isDrag)
                 {
@@ -103,14 +101,14 @@ namespace Player.ActionHandlers
 
                 if (!_isDrag)
                 {
-                    _pointerDownPosition = _mainCamera.ScreenToWorldPoint(currentPointerDownScreenPosition);
+                    _pointerDownPosition = CameraHolder.Instance.MainCamera.ScreenToWorldPoint(currentPointerDownScreenPosition);
                     _lastClickPosition = currentPointerDownScreenPosition;
                 }
                 else
                 {
                     if (currentPointerDownScreenPosition != _lastClickPosition)
                     {
-                        Vector3 currentPointerDownWorldPosition = _mainCamera.ScreenToWorldPoint(currentPointerDownScreenPosition);
+                        Vector3 currentPointerDownWorldPosition = CameraHolder.Instance.MainCamera.ScreenToWorldPoint(currentPointerDownScreenPosition);
                         Vector3 dragDirection = currentPointerDownWorldPosition - _pointerDownPosition;
                         ChangeDragPosition?.Invoke(dragDirection);
                         _pointerDownPosition = currentPointerDownWorldPosition;
