@@ -15,49 +15,22 @@ namespace Player.ActionHandlers
         public event Action<Vector3> PointerUpEvent;
         public event Action<Vector3> DragStartEvent;
         public event Action<Vector3> DragEndEvent;
+        public event Action<Vector3> ChangeDragPosition;
 
         private Vector3 _pointerDownPosition;
+        private Vector3 _lastClickPosition;
 
         private bool _isClick;
         private bool _isDrag;
         private float _clickHoldDuration;
 
+        private UnityEngine.Camera _mainCamera => CameraHolder.Instance.MainCamera;
+
 
         private void Update()
         {
-
-            if (Input.GetMouseButtonDown(0))
-            {
-                _isClick = true;
-                _clickHoldDuration = .0f;
-
-                _pointerDownPosition = CameraHolder.Instance.MainCamera.ScreenToWorldPoint(Input.mousePosition);
-
-                PointerDownEvent?.Invoke(_pointerDownPosition);
-
-                _pointerDownPosition = new Vector3(_pointerDownPosition.x, _pointerDownPosition.y, .0f);
-            }
-            else if (Input.GetMouseButtonUp(0))
-            {
-                var pointerUpPosition = CameraHolder.Instance.MainCamera.ScreenToWorldPoint(Input.mousePosition);
-
-                if (_isDrag)
-                {
-                    DragEndEvent?.Invoke(pointerUpPosition);
-
-                    _isDrag = false;
-                }
-                else
-                {
-                    ClickEvent?.Invoke(pointerUpPosition);
-                }
-
-                PointerUpEvent?.Invoke(pointerUpPosition);
-
-                _isClick = false;
-            }
-
-
+            TrackingUpAndDownClick();
+            ClickMovementTracking();
         }
 
         private void LateUpdate()
@@ -87,6 +60,65 @@ namespace Player.ActionHandlers
         {
             DragStartEvent = null;
             DragEndEvent = null;
+        }
+
+        private void TrackingUpAndDownClick()
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                _isClick = true;
+                _clickHoldDuration = .0f;
+
+                _pointerDownPosition = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
+
+                PointerDownEvent?.Invoke(_pointerDownPosition);
+
+                _pointerDownPosition = new Vector3(_pointerDownPosition.x, _pointerDownPosition.y, .0f);
+            }
+            else if (Input.GetMouseButtonUp(0))
+            {
+                var pointerUpPosition = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
+
+                if (_isDrag)
+                {
+                    DragEndEvent?.Invoke(pointerUpPosition);
+                    _isDrag = false;
+                }
+                else
+                {
+                    ClickEvent?.Invoke(pointerUpPosition);
+                }
+
+                PointerUpEvent?.Invoke(pointerUpPosition);
+
+                _isClick = false;
+            }
+        }
+
+        private void ClickMovementTracking()
+        {
+            if (Input.GetMouseButton(0) && PlayerController.PlayerState == PlayerState.None)
+            {
+                Vector3 currentPointerDownScreenPosition = Input.mousePosition;
+
+                if (!_isDrag)
+                {
+                    _pointerDownPosition = _mainCamera.ScreenToWorldPoint(currentPointerDownScreenPosition);
+                    _lastClickPosition = currentPointerDownScreenPosition;
+                }
+                else
+                {
+                    if (currentPointerDownScreenPosition != _lastClickPosition)
+                    {
+                        Vector3 currentPointerDownWorldPosition = _mainCamera.ScreenToWorldPoint(currentPointerDownScreenPosition);
+                        Vector3 dragDirection = currentPointerDownWorldPosition - _pointerDownPosition;
+                        ChangeDragPosition?.Invoke(dragDirection);
+                        _pointerDownPosition = currentPointerDownWorldPosition;
+                    }
+
+                    _lastClickPosition = currentPointerDownScreenPosition;
+                }
+            }
         }
     }
 }
